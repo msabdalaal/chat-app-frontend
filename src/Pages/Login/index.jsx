@@ -32,7 +32,7 @@ const reducer = (state, action) => {
 };
 
 export default function Login() {
-  const { setLogged, loading, setLoading, setLoggedUser, mainColor } =
+  const { loading, setLoading, setLoggedUser, mainColor } =
     useContext(MainContext);
   const [state, dispatch] = useReducer(reducer, initialValue);
   const [errorMessage, setErrorMessage] = useState("");
@@ -70,8 +70,7 @@ export default function Login() {
       email: state.email,
       password: state.password,
     };
-
-    setLogged(true);
+    setLoading(true);
     POST("/api/users/login", payload)
       .then((res) => {
         if (res.data.success) {

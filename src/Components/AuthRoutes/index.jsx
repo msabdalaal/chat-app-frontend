@@ -3,8 +3,8 @@ import { useContext } from "react";
 import { MainContext } from "../../Contexts/MainContext";
 
 const AuthRoutes = () => {
-  const { logged } = useContext(MainContext);
-  return logged ? <Navigate to="/" replace /> : <Outlet />;
+  const { loggedUser } = useContext(MainContext);
+  return loggedUser ? <Navigate to="/" replace /> : <Outlet />;
 };
 
 export default AuthRoutes;

@@ -1,12 +1,11 @@
 import { createContext, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { POST } from "../api/axios";
+import { GET, POST } from "../api/axios";
 
 export let MainContext = createContext("");
 
 export function MainContextProvider({ children }) {
   const [mainColor, setMainColor] = useState("#3A506B");
-  const [logged, setLogged] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [loggedUser, setLoggedUser] = useState({});
@@ -17,10 +16,23 @@ export function MainContextProvider({ children }) {
   const socket = useRef(null);
   function logOut() {
     POST("/api/users/logout", {}).finally(() => {
-      setLoggedUser({});
-      setLogged(false);
+      setLoggedUser(null);
     });
   }
+
+  useEffect(() => {
+    setLoading(true);
+    GET("/api/users/profile")
+      .then((res) => {
+        if (res.data.success) {
+          setLoggedUser(res.data.data);
+        }
+      })
+      .catch(() => {
+        setLoggedUser(null);
+      })
+      .finally(() => setLoading(false));
+  }, []);
   useEffect(() => {
     const mainColorFromLS = localStorage.getItem("mainColor");
     if (mainColorFromLS) {
@@ -36,14 +48,12 @@ export function MainContextProvider({ children }) {
   return (
     <MainContext.Provider
       value={{
-        logged,
         loggedUser,
         setLoggedUser,
         setLoading,
         loading,
         sending,
         setSending,
-        setLogged,
         logOut,
         chatList,
         setChatList,

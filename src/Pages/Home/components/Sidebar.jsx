@@ -19,7 +19,7 @@ import UserProfileModal from "./UserProfileModal";
 import { MuiColorInput } from "mui-color-input";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 const Sidebar = ({ showGroups, setShowGroups }) => {
-  const { setLogged, loggedUser, mainColor, handleChangeMainColor } =
+  const { logOut, loggedUser, mainColor, handleChangeMainColor } =
     useContext(MainContext);
   const [openSettings, setOpenSettings] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
@@ -112,9 +112,7 @@ const Sidebar = ({ showGroups, setShowGroups }) => {
         </Menu>
         <Button
           sx={{ marginTop: "auto", color: "white" }}
-          onClick={() => {
-            setLogged(false);
-          }}
+          onClick={() => logOut()}
           startIcon={<Logout />}
         >
           Logout

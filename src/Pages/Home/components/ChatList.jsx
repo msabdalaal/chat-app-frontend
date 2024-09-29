@@ -35,7 +35,7 @@ const ChatList = ({ showGroups, isMobile }) => {
     setLoading,
     currentChat,
     loggedUser,
-    mainColor
+    mainColor,
   } = useContext(MainContext);
 
   const handleOpenModal = () => {
@@ -183,7 +183,18 @@ const ChatList = ({ showGroups, isMobile }) => {
                     </ListItemAvatar>
                     <ListItemText
                       primary={name}
-                      secondary={chat.lastMessage?.text ?? "No messages yet"}
+                      secondary={
+                        <Typography
+                          sx={{
+                            overflow: "hidden",
+                            whiteSpace: "nowrap",
+                            textOverflow: "ellipsis",
+                            maxWidth: "100px", // Adjust the max width as needed
+                          }}
+                        >
+                          {chat.lastMessage?.text ?? "No messages yet"}
+                        </Typography>
+                      }
                     />
                     <Typography variant="body2" color="textSecondary">
                       {chat.lastMessage

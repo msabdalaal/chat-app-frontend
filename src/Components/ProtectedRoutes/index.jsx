@@ -3,8 +3,8 @@ import { useContext } from "react";
 import { MainContext } from "../../Contexts/MainContext";
 
 const ProtectedRoutes = () => {
-  const { logged } = useContext(MainContext);
-  return logged ? <Outlet /> : <Navigate to="/login" replace />;
+  const { loggedUser } = useContext(MainContext);
+  return loggedUser ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoutes;
