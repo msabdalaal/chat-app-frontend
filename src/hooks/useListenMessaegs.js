@@ -5,7 +5,7 @@ import { produce } from "immer";
 
 const useListenMessages = () => {
   const { socket } = useContext(SocketContext);
-  const { setAllMessage } = useContext(MainContext);
+  const { setAllMessage, setChatList } = useContext(MainContext);
 
   useEffect(() => {
     socket?.on("newMessage", (message) => {
@@ -13,6 +13,19 @@ const useListenMessages = () => {
         produce((draft) => {
           const messages = draft[message.chatId];
           messages?.push(message);
+        })
+      );
+      setChatList(
+        produce((draft) => {
+          if (draft.chats.find((chat) => chat._id == message.chatId)) {
+            const chat = draft.chats.find((chat) => chat._id == message.chatId);
+            chat.lastMessage = message;
+          } else {
+            const chat = draft.groupChats.find(
+              (chat) => chat._id == message.chatId
+            );
+            chat.lastMessage = message;
+          }
         })
       );
     });
