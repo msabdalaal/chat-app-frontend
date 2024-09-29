@@ -44,8 +44,6 @@ function App() {
     );
   }
 
-  localStorage.clear();
-
   return (
     <div>
       <div className="container">
