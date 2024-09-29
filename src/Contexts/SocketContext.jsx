@@ -13,6 +13,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (loggedUser) {
       const socket = io(BASE_URL, {
+        withCredentials: true,
         query: {
           userId: loggedUser._id,
         },
