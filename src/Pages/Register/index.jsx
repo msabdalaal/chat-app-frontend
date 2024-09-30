@@ -43,7 +43,7 @@ const reducer = (state, action) => {
 };
 
 export default function Register() {
-  const { setLogged, loading, setLoading, setLoggedUser, mainColor } =
+  const { loading, setLoading, setLoggedUser, mainColor } =
     useContext(MainContext);
   const [state, dispatch] = useReducer(reducer, initialValue);
   const [clientErrors, setClientErrors] = useState([]);
@@ -61,15 +61,11 @@ export default function Register() {
         .email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] } })
         .required(),
       password: Joi.string()
-        .pattern(
-          new RegExp(
-            "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%?&])[A-Za-z\\d@$!%?&]{8,}$"
-          )
-        )
+        .pattern(new RegExp("^(?=.*[A-Za-z]).{6,}$"))
         .required()
         .messages({
           "string.pattern.base":
-            "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character.",
+            "Password must be at least 6 characters long and include at least one letter.",
         }),
       repeatPassword: Joi.any().valid(Joi.ref("password")).required().messages({
         "any.only": "Passwords do not match",
@@ -98,7 +94,6 @@ export default function Register() {
       POST("/api/users/register", payload)
         .then((res) => {
           if (res.data.success) {
-            setLogged(true);
             setLoggedUser(res.data.data);
           }
         })
@@ -131,7 +126,7 @@ export default function Register() {
       >
         {serverErrors && (
           <Typography color="error" variant="body2" align="center" my={2}>
-            {serverErrors}
+            {serverErrors.toString() || ""}
           </Typography>
         )}
         {clientErrors.length > 0 &&
