@@ -184,7 +184,7 @@ const ChatList = ({ showGroups, isMobile }) => {
                           horizontal: "right",
                         }}
                         variant={
-                          onlineUsers?.includes(user._id) ? "dot" : "standard"
+                          onlineUsers?.includes(!showGroups && user._id) ? "dot" : "standard"
                         }
                         sx={{
                           "& .MuiBadge-dot": {
@@ -198,10 +198,12 @@ const ChatList = ({ showGroups, isMobile }) => {
                       >
                         <Avatar
                           sx={{
-                            bgcolor: `${stringToColor(user.name)}`,
+                            bgcolor: `${stringToColor(
+                              showGroups ? user : user.name
+                            )}`,
                           }}
                         >
-                          {getNameInitials(user.name)}
+                          {getNameInitials(showGroups ? user : user.name)}
                         </Avatar>
                       </Badge>
                     </ListItemAvatar>
@@ -216,7 +218,7 @@ const ChatList = ({ showGroups, isMobile }) => {
                               textTransform: "capitalize",
                             }}
                           >
-                            {user.name}
+                            {showGroups ? user : user.name}
                           </Typography>
                           {/* Unread message indicator */}
                           {chat.lastMessage?.readBy &&
