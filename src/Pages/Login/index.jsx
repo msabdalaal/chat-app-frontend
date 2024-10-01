@@ -70,7 +70,7 @@ export default function Login() {
       email: state.email,
       password: state.password,
     };
-    setLoading(true);
+    setLoading?.(true);
     POST("/api/users/login", payload)
       .then((res) => {
         if (res.data.success) {

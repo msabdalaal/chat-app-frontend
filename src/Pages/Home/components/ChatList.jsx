@@ -13,6 +13,7 @@ import {
   Box,
   Paper,
   InputBase,
+  Badge,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import ChatListModal from "./ChatListModal";
@@ -22,11 +23,13 @@ import dayjs from "dayjs";
 import { getNameInitials } from "../../../utils/helpers/getNameInitials";
 import { stringToColor } from "../../../utils/helpers/getColorFromString";
 import SearchIcon from "@mui/icons-material/Search";
+import useListenTyping from "../../../hooks/useListenTyping";
+import { SocketContext } from "../../../Contexts/SocketContext";
 
 const ChatList = ({ showGroups, isMobile }) => {
   const [openModal, setOpenModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search query
-
+  useListenTyping();
   const {
     chatList,
     setChatList,
@@ -36,8 +39,9 @@ const ChatList = ({ showGroups, isMobile }) => {
     currentChat,
     loggedUser,
     mainColor,
+    typing,
   } = useContext(MainContext);
-
+  const { onlineUsers } = useContext(SocketContext);
   const handleOpenModal = () => {
     setOpenModal(true);
   };
@@ -153,11 +157,11 @@ const ChatList = ({ showGroups, isMobile }) => {
           >
             {Array.isArray(filteredChats) && filteredChats.length > 0 ? (
               filteredChats.map((chat) => {
-                const name = showGroups
+                const user = showGroups
                   ? chat.groupName
                   : chat.participants?.find(
                       (participant) => participant._id !== loggedUser._id
-                    ).name;
+                    );
                 return (
                   <ListItem
                     onClick={() => {
@@ -173,16 +177,64 @@ const ChatList = ({ showGroups, isMobile }) => {
                     disablePadding
                   >
                     <ListItemAvatar>
-                      <Avatar
+                      <Badge
+                        overlap="circular"
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "right",
+                        }}
+                        variant={
+                          onlineUsers.includes(user._id) ? "dot" : "standard"
+                        }
                         sx={{
-                          bgcolor: `${stringToColor(name)}`,
+                          "& .MuiBadge-dot": {
+                            backgroundColor: mainColor, // Set the color for online indicator
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            border: "2px solid white", // Border to match the avatar's edge
+                          },
                         }}
                       >
-                        {getNameInitials(name)}
-                      </Avatar>
+                        <Avatar
+                          sx={{
+                            bgcolor: `${stringToColor(user.name)}`,
+                          }}
+                        >
+                          {getNameInitials(user.name)}
+                        </Avatar>
+                      </Badge>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={name}
+                      primary={
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              marginRight: "8px",
+                              fontSize: 18,
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {user.name}
+                          </Typography>
+                          {/* Unread message indicator */}
+                          {chat.lastMessage?.readBy &&
+                            !chat.lastMessage.readBy.includes(
+                              loggedUser._id
+                            ) && (
+                              <Box
+                                sx={{
+                                  width: "10px",
+                                  height: "10px",
+                                  backgroundColor: mainColor, // Red color for unread message
+                                  borderRadius: "50%",
+                                  marginLeft: "4px",
+                                }}
+                              ></Box>
+                            )}
+                        </Box>
+                      }
                       secondary={
                         <Typography
                           sx={{
@@ -190,9 +242,61 @@ const ChatList = ({ showGroups, isMobile }) => {
                             whiteSpace: "nowrap",
                             textOverflow: "ellipsis",
                             maxWidth: "100px", // Adjust the max width as needed
+                            fontSize: 14,
                           }}
+                          color="textSecondary"
                         >
-                          {chat.lastMessage?.text ?? "No messages yet"}
+                          {typing?.find((item) => item.chatId == chat._id) ? (
+                            <Typography
+                              sx={{
+                                color: mainColor,
+                                fontStyle: "italic", // Italicize the "Typing..." text
+                                display: "inline-flex", // Allow for animated dots
+                                alignItems: "center",
+                                fontSize: 14,
+                              }}
+                            >
+                              Typing
+                              <Box
+                                sx={{
+                                  width: "4px",
+                                  height: "4px",
+                                  borderRadius: "50%",
+                                  backgroundColor: mainColor,
+                                  animation: "dot-flash 1s infinite",
+                                  marginLeft: "4px",
+                                  "&:nth-of-type(2)": {
+                                    animationDelay: "0.2s",
+                                  },
+                                  "&:nth-of-type(3)": {
+                                    animationDelay: "0.4s",
+                                  },
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  width: "4px",
+                                  height: "4px",
+                                  borderRadius: "50%",
+                                  backgroundColor: mainColor,
+                                  animation: "dot-flash 1s infinite",
+                                  marginLeft: "4px",
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  width: "4px",
+                                  height: "4px",
+                                  borderRadius: "50%",
+                                  backgroundColor: mainColor,
+                                  animation: "dot-flash 1s infinite",
+                                  marginLeft: "4px",
+                                }}
+                              />
+                            </Typography>
+                          ) : (
+                            chat.lastMessage?.text ?? "No messages yet"
+                          )}
                         </Typography>
                       }
                     />

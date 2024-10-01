@@ -13,6 +13,7 @@ export function MainContextProvider({ children }) {
   const [friendsInfo, setFriendsInfo] = useState([]);
   const [chatList, setChatList] = useState([]);
   const [allMessage, setAllMessage] = useState({});
+  const [typing, setTyping] = useState([]);
   const socket = useRef(null);
   function logOut() {
     POST("/api/users/logout", {}).finally(() => {
@@ -66,6 +67,8 @@ export function MainContextProvider({ children }) {
         socket,
         mainColor,
         handleChangeMainColor,
+        typing,
+        setTyping,
       }}
     >
       {children}

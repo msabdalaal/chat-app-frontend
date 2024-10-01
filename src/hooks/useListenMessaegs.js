@@ -29,8 +29,28 @@ const useListenMessages = () => {
         })
       );
     });
-    return () => socket?.off("newMessage");
-  }, [setAllMessage, socket]);
+
+    socket?.on("readMessages", ({ chatId, userId }) => {
+      setAllMessage(
+        produce((draft) => {
+          const messages = draft[chatId];
+
+          if (messages) {
+            messages.forEach((message) => {
+              if (!message.readBy.includes(userId)) {
+                message.readBy?.push(userId);
+              }
+            });
+          }
+        })
+      );
+    });
+
+    return () => {
+      socket?.off("newMessage");
+      socket?.off("readMessages");
+    };
+  }, [setAllMessage, setChatList, socket]);
 };
 
 export default useListenMessages;

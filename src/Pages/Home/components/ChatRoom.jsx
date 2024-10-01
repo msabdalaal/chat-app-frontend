@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import {
   Box,
   Grid,
@@ -14,7 +14,7 @@ import { MoreVert } from "@mui/icons-material";
 import MessageInput from "./MessageInput";
 import PropTypes from "prop-types";
 import { useContext, useEffect, useState } from "react";
-import { DELETE, GET, POST } from "../../../api/axios";
+import { DELETE, GET, PATCH, POST } from "../../../api/axios";
 import { MainContext } from "../../../Contexts/MainContext";
 import ChatMenu from "./ChatMenu";
 import dayjs from "dayjs";
@@ -24,7 +24,9 @@ import SmsFailedOutlinedIcon from "@mui/icons-material/SmsFailedOutlined";
 import { produce } from "immer";
 import UserProfileModal from "./UserProfileModal";
 import useListenMessages from "../../../hooks/useListenMessaegs";
-
+import useListenTyping from "../../../hooks/useListenTyping";
+import TypingIndicator from "./TypingIndicator";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
 const ChatRoom = ({ isMobile, showGroups }) => {
   const [newMessage, setNewMessage] = useState("");
   const [anchorEls, setAnchorEls] = useState({});
@@ -38,22 +40,59 @@ const ChatRoom = ({ isMobile, showGroups }) => {
     setAllMessage,
     setChatList,
     setSending,
-    mainColor
+    mainColor,
+    typing,
   } = useContext(MainContext);
 
   // Ref to the last message element
   const lastMessageRef = useRef(null);
+  const typingRef = useRef(null); // Ref to the typing indicator
 
+  useListenTyping();
   // Function to scroll to the last message
-  const scrollToBottom = () => {
-    if (lastMessageRef.current) {
+  const scrollToBottom = useCallback(() => {
+    if (typing?.find((item) => item.chatId === currentChat._id)) {
+      if (typingRef.current) {
+        typingRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    } else if (lastMessageRef.current) {
       lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, [currentChat._id, typing]);
+  useEffect(() => {
+    scrollToBottom(); // Scroll to bottom when messages or typing status changes
+  }, [allMessage, currentChat, scrollToBottom, typing]);
+  const readMessages = useCallback(async () => {
+    if (currentChat) {
+      await PATCH(`/api/messages/read/${currentChat._id}`).then((response) => {
+        if (response.data.success) {
+          setChatList(
+            produce((draft) => {
+              const list = draft[currentChat.isGroup ? "groupChats" : "chats"];
+              list.forEach((chat) => {
+                if (
+                  chat._id === currentChat._id &&
+                  !chat.lastMessage?.readBy?.includes(loggedUser._id)
+                ) {
+                  chat.lastMessage?.readBy?.push(loggedUser._id);
+                }
+              });
+            })
+          );
+        }
+      });
+    }
+  }, [
+    currentChat._id,
+    currentChat.isGroup,
+    loggedUser._id,
+    setChatList,
+    allMessage,
+  ]);
 
   useEffect(() => {
-    scrollToBottom(); // Scroll to bottom when messages change
-  }, [allMessage, currentChat]);
+    readMessages();
+  }, [readMessages]);
 
   const handleClick = (event, messageId) => {
     setAnchorEls((prev) => ({ ...prev, [messageId]: event.currentTarget }));
@@ -94,21 +133,41 @@ const ChatRoom = ({ isMobile, showGroups }) => {
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return;
 
+    const tempId = Date.now(); // Temporary ID for optimistic update
+
     const messageData = {
       text: newMessage,
+      _id: tempId, // Use tempId until the real one comes from the server
+      pending: true, // Add a flag to mark it as pending
+      sender: {
+        _id: loggedUser._id,
+      },
+      createdAt: dayjs().toISOString(),
     };
 
     setNewMessage("");
     setSending(true);
-    POST(`/api/messages/${currentChat?._id}`, messageData)
+
+    // Optimistically add the message to the chat
+    setAllMessage((prev) => ({
+      ...prev,
+      [currentChat?._id]: [...(prev[currentChat?._id] || []), messageData],
+    }));
+
+    scrollToBottom(); // Ensure to scroll after optimistic message is added
+
+    // Send message to backend
+    POST(`/api/messages/${currentChat?._id}`, { text: newMessage })
       .then((res) => {
+        // Replace the temporary message with the one from the backend
         setAllMessage((prev) => ({
           ...prev,
-          [currentChat?._id]: [
-            ...(prev[currentChat?._id] || []),
-            res.data.data,
-          ],
+          [currentChat?._id]: prev[currentChat?._id].map(
+            (msg) => (msg._id === tempId ? res.data.data : msg) // Replace the message with the same tempId
+          ),
         }));
+
+        // Update the chat list with the real last message
         setChatList(
           produce((draft) => {
             const thisChat = draft[
@@ -120,12 +179,20 @@ const ChatRoom = ({ isMobile, showGroups }) => {
       })
       .catch((err) => {
         console.error("Error sending message:", err);
+        // Optionally handle failed optimistic update (e.g., by showing an error in the UI)
+        setAllMessage((prev) => ({
+          ...prev,
+          [currentChat?._id]: prev[currentChat?._id].map((msg) =>
+            msg._id === tempId ? { ...msg, error: true } : msg
+          ),
+        }));
       })
       .finally(() => {
         setSending(false);
         scrollToBottom(); // Ensure to scroll after message is sent
       });
   };
+
   const name = currentChat.groupName
     ? currentChat.groupName
     : currentChat.participants?.find(
@@ -233,13 +300,13 @@ const ChatRoom = ({ isMobile, showGroups }) => {
                 display: "flex",
                 flexDirection: "column",
                 alignItems:
-                  message.sender._id === loggedUser?._id
+                  message.sender?._id === loggedUser?._id
                     ? "flex-end"
                     : "flex-start",
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                {message.sender._id === loggedUser?._id && (
+                {message.sender?._id === loggedUser?._id && (
                   <IconButton
                     onClick={(event) => handleClick(event, message._id)}
                   >
@@ -272,11 +339,11 @@ const ChatRoom = ({ isMobile, showGroups }) => {
                   sx={{
                     padding: 1,
                     backgroundColor:
-                      message.sender._id === loggedUser?._id
+                      message.sender?._id === loggedUser?._id
                         ? mainColor
                         : "#E2E8F0",
                     color:
-                      message.sender._id === loggedUser?._id
+                      message.sender?._id === loggedUser?._id
                         ? "white"
                         : "#333333",
                     borderRadius: 2,
@@ -286,11 +353,24 @@ const ChatRoom = ({ isMobile, showGroups }) => {
                   <Typography variant="body1">{message.text}</Typography>
                 </Paper>
               </Box>
-              <Typography variant="caption" color="textSecondary">
+              <Typography
+                component="span"
+                variant="caption"
+                color="textSecondary"
+              >
+                {message.sender?._id === loggedUser?._id &&
+                message.readBy?.length >= 2 ? (
+                  <DoneAllIcon sx={{ marginRight: 1 }} />
+                ) : (
+                  ""
+                )}
                 {dayjs(message.createdAt).format("hh:mm A")}
               </Typography>
             </Box>
           ))}
+          {typing?.find((item) => item.chatId === currentChat._id) && (
+            <TypingIndicator typingRef={typingRef} />
+          )}
         </Box>
 
         {/* Message Input */}
