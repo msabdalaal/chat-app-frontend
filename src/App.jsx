@@ -24,6 +24,13 @@ function App() {
     }
   }, []);
 
+  if (
+    Notification.permission === "default" ||
+    Notification.permission === "denied"
+  ) {
+    Notification.requestPermission();
+  }
+
   if (isMobile) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100 bg-white">

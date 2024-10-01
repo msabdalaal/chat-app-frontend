@@ -28,6 +28,14 @@ const useListenMessages = () => {
           }
         })
       );
+      if (document.visibilityState === "hidden") {
+        if (Notification.permission === "granted") {
+          new Notification(message.sender.name, {
+            body: message.text,
+            icon: "icon.png", // Optional icon for the notification
+          });
+        }
+      }
     });
 
     socket?.on("readMessages", ({ chatId, userId }) => {
@@ -37,7 +45,7 @@ const useListenMessages = () => {
 
           if (messages) {
             messages.forEach((message) => {
-              if (!message.readBy.includes(userId)) {
+              if (!message.readBy?.includes(userId)) {
                 message.readBy?.push(userId);
               }
             });

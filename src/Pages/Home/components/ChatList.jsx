@@ -83,7 +83,7 @@ const ChatList = ({ showGroups, isMobile }) => {
         : chat.participants?.find(
             (participant) => participant._id !== loggedUser._id
           )?.name;
-      return name?.toLowerCase().includes(searchQuery.toLowerCase());
+      return name?.toLowerCase()?.includes(searchQuery.toLowerCase());
     }
   );
 
@@ -184,7 +184,7 @@ const ChatList = ({ showGroups, isMobile }) => {
                           horizontal: "right",
                         }}
                         variant={
-                          onlineUsers.includes(user._id) ? "dot" : "standard"
+                          onlineUsers?.includes(user._id) ? "dot" : "standard"
                         }
                         sx={{
                           "& .MuiBadge-dot": {
@@ -220,7 +220,7 @@ const ChatList = ({ showGroups, isMobile }) => {
                           </Typography>
                           {/* Unread message indicator */}
                           {chat.lastMessage?.readBy &&
-                            !chat.lastMessage.readBy.includes(
+                            !chat.lastMessage.readBy?.includes(
                               loggedUser._id
                             ) && (
                               <Box
