@@ -1,9 +1,17 @@
 import { Box, Paper, Typography } from "@mui/material";
 import "./typing-indicator.css";
+import { motion } from "framer-motion";
 // eslint-disable-next-line react/prop-types
 const TypingIndicator = ({ typingRef }) => {
   return (
     <Box
+      component={motion.div}
+      initial={{
+        opacity: 0,
+      }}
+      animate={{
+        opacity: 1,
+      }}
       ref={typingRef}
       sx={{
         display: "flex",

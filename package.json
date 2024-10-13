@@ -25,6 +25,7 @@
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "dayjs": "^1.11.13",
+    "framer-motion": "^11.11.8",
     "immer": "^10.1.1",
     "joi": "^17.13.3",
     "jwt-decode": "^4.0.0",

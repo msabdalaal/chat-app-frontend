@@ -65,7 +65,7 @@ const MessageInput = ({ message, setMessage, onSend }) => {
         onKeyPress={!sending ? handleKeyPress : null}
         sx={{ backgroundColor: "#f3f4f6", borderRadius: 0, width: "100%" }}
       />
-      <IconButton onClick={!sending ? onSend : null} disabled={!message.trim()}>
+      <IconButton onClick={!sending ? onSend : null}>
         <Send sx={{ color: mainColor }} />
       </IconButton>
     </Box>

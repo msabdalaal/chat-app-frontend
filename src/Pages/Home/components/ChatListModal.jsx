@@ -14,12 +14,13 @@ import { GET, POST } from "../../../api/axios";
 import { MainContext } from "../../../Contexts/MainContext";
 import { produce } from "immer";
 
-const ChatListModal = ({ open, handleClose, showGroups }) => {
+// eslint-disable-next-line react/prop-types
+const ChatListModal = ({ open, handleClose, showGroups, isMobile }) => {
   const [email, setEmail] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedEmails, setSelectedEmails] = useState([]);
-  const { setChatList,mainColor } = useContext(MainContext);
+  const { setChatList, mainColor } = useContext(MainContext);
   const [groupName, setGroupName] = useState("");
 
   useEffect(() => {
@@ -99,7 +100,9 @@ const ChatListModal = ({ open, handleClose, showGroups }) => {
           padding: "20px",
           borderRadius: "8px",
           textAlign: "center",
-          maxWidth: "500px",
+          width: "max-content",
+          minWidth: "400px",
+          maxWidth: isMobile ? "85vw" : "500px",
           margin: "auto",
           position: "fixed",
           top: "50%",

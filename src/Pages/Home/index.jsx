@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
-import { Grid, Box, IconButton, Drawer, useMediaQuery } from "@mui/material";
-import { Menu } from "@mui/icons-material";
+import { Grid, Box, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Sidebar from "./components/Sidebar";
 import ChatList from "./components/ChatList";
@@ -9,12 +8,9 @@ import { MainContext } from "../../Contexts/MainContext";
 
 const ChatApp = () => {
   const [showGroups, setShowGroups] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+
   const { mainColor } = useContext(MainContext);
   return (
     // Parent container that takes up full viewport height and centers the content
@@ -41,38 +37,20 @@ const ChatApp = () => {
           overflow: "hidden", //
         }}
       >
-        <Grid container sx={{ height: "100%", width: "100%", margin: 0 }}>
-          {/* Toggle Button for Mobile */}
-          {isMobile && (
-            <IconButton
-              onClick={toggleSidebar}
-              sx={{ position: "absolute", top: 10, left: 10, zIndex: 1300 }}
-            >
-              <Menu sx={{ color: mainColor }} />
-            </IconButton>
-          )}
-
-          {/* Sidebar for Mobile */}
-          {isMobile ? (
-            <Drawer
-              anchor="left"
-              open={sidebarOpen}
-              onClose={toggleSidebar}
-              variant="temporary"
-              sx={{
-                "& .MuiDrawer-paper": {
-                  backgroundColor: mainColor,
-                  color: "white",
-                  width: "240px",
-                  padding: 0,
-                },
-              }}
-            >
-              <Sidebar showGroups={showGroups} setShowGroups={setShowGroups} />
-            </Drawer>
-          ) : (
-            <Sidebar showGroups={showGroups} setShowGroups={setShowGroups} />
-          )}
+        <Grid
+          container
+          sx={{
+            height: "100%",
+            width: "100%",
+            margin: 0,
+            position: "relative",
+          }}
+        >
+          <Sidebar
+            showGroups={showGroups}
+            isMobile={isMobile}
+            setShowGroups={setShowGroups}
+          />
 
           {/* Groups or Friends List */}
           <ChatList showGroups={showGroups} isMobile={isMobile} />

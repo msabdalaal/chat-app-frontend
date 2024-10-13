@@ -60,7 +60,8 @@ const ChatMenuModal = ({ open, handleClose, actionType }) => {
     setCurrentChat,
     loggedUser,
     setAllMessage,
-    mainColor
+    mainColor,
+    isMobile,
   } = useContext(MainContext);
   const { title, message, showEmail } = actionDetails[actionType];
 
@@ -221,7 +222,8 @@ const ChatMenuModal = ({ open, handleClose, actionType }) => {
           padding: "20px",
           borderRadius: "8px",
           textAlign: "center",
-          minWidth: "400px",
+          minWidth: "300px",
+          maxWidth: isMobile ? "85vw" : "500px",
           margin: "auto",
           position: "fixed",
           top: "50%",

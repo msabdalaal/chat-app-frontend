@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useCallback, useRef } from "react";
 import {
   Box,
@@ -27,7 +26,8 @@ import useListenMessages from "../../../hooks/useListenMessaegs";
 import useListenTyping from "../../../hooks/useListenTyping";
 import TypingIndicator from "./TypingIndicator";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
-const ChatRoom = ({ isMobile, showGroups }) => {
+import { motion } from "framer-motion";
+const ChatRoom = ({ showGroups }) => {
   const [newMessage, setNewMessage] = useState("");
   const [anchorEls, setAnchorEls] = useState({});
   const [chatMenuAnchorEl, setChatMenuAnchorEl] = useState(null);
@@ -44,12 +44,11 @@ const ChatRoom = ({ isMobile, showGroups }) => {
     typing,
   } = useContext(MainContext);
 
-  // Ref to the last message element
   const lastMessageRef = useRef(null);
-  const typingRef = useRef(null); // Ref to the typing indicator
+  const typingRef = useRef(null);
 
   useListenTyping();
-  // Function to scroll to the last message
+
   const scrollToBottom = useCallback(() => {
     if (typing?.find((item) => item.chatId === currentChat._id)) {
       if (typingRef.current) {
@@ -60,7 +59,7 @@ const ChatRoom = ({ isMobile, showGroups }) => {
     }
   }, [currentChat._id, typing]);
   useEffect(() => {
-    scrollToBottom(); // Scroll to bottom when messages or typing status changes
+    scrollToBottom();
   }, [allMessage, currentChat, scrollToBottom, typing]);
   const readMessages = useCallback(async () => {
     if (currentChat) {
@@ -82,13 +81,7 @@ const ChatRoom = ({ isMobile, showGroups }) => {
         }
       });
     }
-  }, [
-    currentChat._id,
-    currentChat.isGroup,
-    loggedUser._id,
-    setChatList,
-    allMessage,
-  ]);
+  }, [currentChat, setChatList, loggedUser._id]);
 
   useEffect(() => {
     readMessages();
@@ -133,12 +126,12 @@ const ChatRoom = ({ isMobile, showGroups }) => {
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return;
 
-    const tempId = Date.now(); // Temporary ID for optimistic update
+    const tempId = Date.now();
 
     const messageData = {
       text: newMessage,
-      _id: tempId, // Use tempId until the real one comes from the server
-      pending: true, // Add a flag to mark it as pending
+      _id: tempId,
+      pending: true,
       sender: {
         _id: loggedUser._id,
       },
@@ -148,26 +141,22 @@ const ChatRoom = ({ isMobile, showGroups }) => {
     setNewMessage("");
     setSending(true);
 
-    // Optimistically add the message to the chat
     setAllMessage((prev) => ({
       ...prev,
       [currentChat?._id]: [...(prev[currentChat?._id] || []), messageData],
     }));
 
-    scrollToBottom(); // Ensure to scroll after optimistic message is added
+    scrollToBottom();
 
-    // Send message to backend
     POST(`/api/messages/${currentChat?._id}`, { text: newMessage })
       .then((res) => {
-        // Replace the temporary message with the one from the backend
         setAllMessage((prev) => ({
           ...prev,
-          [currentChat?._id]: prev[currentChat?._id].map(
-            (msg) => (msg._id === tempId ? res.data.data : msg) // Replace the message with the same tempId
+          [currentChat?._id]: prev[currentChat?._id].map((msg) =>
+            msg._id === tempId ? res.data.data : msg
           ),
         }));
 
-        // Update the chat list with the real last message
         setChatList(
           produce((draft) => {
             const thisChat = draft[
@@ -179,7 +168,7 @@ const ChatRoom = ({ isMobile, showGroups }) => {
       })
       .catch((err) => {
         console.error("Error sending message:", err);
-        // Optionally handle failed optimistic update (e.g., by showing an error in the UI)
+
         setAllMessage((prev) => ({
           ...prev,
           [currentChat?._id]: prev[currentChat?._id].map((msg) =>
@@ -189,7 +178,7 @@ const ChatRoom = ({ isMobile, showGroups }) => {
       })
       .finally(() => {
         setSending(false);
-        scrollToBottom(); // Ensure to scroll after message is sent
+        scrollToBottom();
       });
   };
 
@@ -225,8 +214,9 @@ const ChatRoom = ({ isMobile, showGroups }) => {
       />
       <Grid
         item
-        xs={isMobile ? 12 : 8}
+        xs={true}
         sx={{
+          width: "100%",
           display: "flex",
           flexDirection: "column",
           height: "100%",
@@ -234,7 +224,7 @@ const ChatRoom = ({ isMobile, showGroups }) => {
           padding: 0,
         }}
       >
-        {/* Chat Header */}
+        {}
         <Box
           sx={{
             display: "flex",
@@ -271,31 +261,39 @@ const ChatRoom = ({ isMobile, showGroups }) => {
           </Box>
         </Box>
 
-        {/* Chat Messages */}
+        {}
         <Box
           sx={{
             flex: 1,
             padding: "16px",
             display: "flex",
             flexDirection: "column",
-            gap: 2,
+            gap: 1,
             overflowY: "auto",
+            overflowX: "hidden",
             "&::-webkit-scrollbar": {
-              width: "5px", // Width of the scrollbar
+              width: "5px",
             },
             "&::-webkit-scrollbar-track": {
-              backgroundColor: "transparent", // Background of the scrollbar track
+              backgroundColor: "transparent",
             },
             "&::-webkit-scrollbar-thumb": {
-              backgroundColor: mainColor, // Scrollbar thumb color
-              borderRadius: "10px", // Rounded corners for the thumb
+              backgroundColor: mainColor,
+              borderRadius: "10px",
             },
           }}
         >
           {allMessage?.[currentChat?._id]?.map((message, index, arr) => (
             <Box
+              component={motion.div}
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
               key={message._id}
-              ref={index === arr.length - 1 ? lastMessageRef : null} // Attach the ref to the last message
+              ref={index === arr.length - 1 ? lastMessageRef : null}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -373,7 +371,7 @@ const ChatRoom = ({ isMobile, showGroups }) => {
           )}
         </Box>
 
-        {/* Message Input */}
+        {}
         <MessageInput
           message={newMessage}
           setMessage={setNewMessage}
@@ -384,7 +382,7 @@ const ChatRoom = ({ isMobile, showGroups }) => {
   ) : (
     <Grid
       item
-      xs={isMobile ? 12 : 8}
+      xs={true}
       sx={{
         display: "flex",
         flexDirection: "column",

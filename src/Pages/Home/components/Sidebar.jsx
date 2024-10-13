@@ -1,13 +1,5 @@
-import {
-  Avatar,
-  IconButton,
-  Button,
-  Grid,
-  Menu,
-  MenuItem,
-  Box,
-} from "@mui/material";
-import { Logout, Settings } from "@mui/icons-material";
+import { Avatar, IconButton, Grid, Menu, MenuItem, Box } from "@mui/material";
+import { FolderOpenOutlined, Logout, Settings } from "@mui/icons-material";
 import GroupsIcon from "@mui/icons-material/Groups";
 import ChatIcon from "@mui/icons-material/Chat";
 import PropTypes from "prop-types";
@@ -18,9 +10,16 @@ import { getNameInitials } from "../../../utils/helpers/getNameInitials";
 import UserProfileModal from "./UserProfileModal";
 import { MuiColorInput } from "mui-color-input";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-const Sidebar = ({ showGroups, setShowGroups }) => {
-  const { logOut, loggedUser, mainColor, handleChangeMainColor } =
-    useContext(MainContext);
+// eslint-disable-next-line react/prop-types
+const Sidebar = ({ isMobile, showGroups, setShowGroups }) => {
+  const {
+    logOut,
+    loggedUser,
+    mainColor,
+    handleChangeMainColor,
+    setIsChatListCollapsed,
+    isChatListCollapsed,
+  } = useContext(MainContext);
   const [openSettings, setOpenSettings] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
   return (
@@ -32,7 +31,7 @@ const Sidebar = ({ showGroups, setShowGroups }) => {
       />
       <Grid
         item
-        xs={1}
+        xs={isMobile ? 2 : 1}
         sx={{
           backgroundColor: mainColor,
           color: "white",
@@ -46,8 +45,8 @@ const Sidebar = ({ showGroups, setShowGroups }) => {
         <IconButton onClick={() => setShowUserProfile(true)}>
           <Avatar
             sx={{
-              width: 60,
-              height: 60,
+              width: isMobile ? 40 : 60,
+              height: isMobile ? 40 : 60,
               marginBottom: 4,
               marginTop: 2,
               bgcolor: `${stringToColor(loggedUser.name)}`,
@@ -81,7 +80,6 @@ const Sidebar = ({ showGroups, setShowGroups }) => {
             sx={showGroups ? { color: mainColor } : { color: "white" }}
           />
         </IconButton>
-
         <IconButton onClick={() => setOpenSettings(true)}>
           <Settings sx={{ color: "white" }} />
         </IconButton>
@@ -110,13 +108,34 @@ const Sidebar = ({ showGroups, setShowGroups }) => {
             </Box>
           </MenuItem>
         </Menu>
-        <Button
+        {isMobile ? (
+          <IconButton
+            id="collapse"
+            sx={
+              !isChatListCollapsed
+                ? { color: "black", backgroundColor: "white" }
+                : { color: "white" }
+            }
+            onClick={
+              isMobile ? null : () => setIsChatListCollapsed((prev) => !prev)
+            }
+          >
+            <FolderOpenOutlined
+              sx={[
+                { marginTop: 5 },
+                !isChatListCollapsed
+                  ? { color: mainColor }
+                  : { color: "white" },
+              ]}
+            />
+          </IconButton>
+        ) : null}
+        <IconButton
           sx={{ marginTop: "auto", color: "white" }}
           onClick={() => logOut()}
-          startIcon={<Logout />}
         >
-          Logout
-        </Button>
+          <Logout />
+        </IconButton>
       </Grid>
     </>
   );

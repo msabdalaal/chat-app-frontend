@@ -8,21 +8,20 @@ import Home from "./Pages/Home";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoutes from "./Components/ProtectedRoutes";
 import AuthRoutes from "./Components/AuthRoutes";
-import { useEffect, useState } from "react";
 
 function App() {
-  const [isMobile, setIsMobile] = useState(false);
+  // const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const mobileDevices =
-      /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/;
-    const isMobileDevice = mobileDevices.test(userAgent);
+  // useEffect(() => {
+  //   const userAgent = navigator.userAgent.toLowerCase();
+  //   const mobileDevices =
+  //     /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/;
+  //   const isMobileDevice = mobileDevices.test(userAgent);
 
-    if (isMobileDevice || window.innerWidth <= 768) {
-      setIsMobile(true);
-    }
-  }, []);
+  //   if (isMobileDevice || window.innerWidth <= 768) {
+  //     setIsMobile(true);
+  //   }
+  // }, []);
 
   if (
     Notification.permission === "default" ||
@@ -31,25 +30,25 @@ function App() {
     Notification.requestPermission();
   }
 
-  if (isMobile) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100 bg-white">
-        <div className="text-center p-5 rounded bg-white">
-          <i className="fas fa-desktop display-1 text-primary mb-4"></i>
-          <h1 className="display-5 fw-bold mb-3 text-secondary">
-            Please use a computer
-          </h1>
-          <p className="lead text-muted">
-            This application works best on a desktop or laptop. Switch to a
-            larger screen for the best experience!
-          </p>
-          <a href="/" className="btn btn-primary mt-4">
-            Refresh
-          </a>
-        </div>
-      </div>
-    );
-  }
+  // if (isMobile) {
+  //   return (
+  //     <div className="d-flex justify-content-center align-items-center vh-100 bg-white">
+  //       <div className="text-center p-5 rounded bg-white">
+  //         <i className="fas fa-desktop display-1 text-primary mb-4"></i>
+  //         <h1 className="display-5 fw-bold mb-3 text-secondary">
+  //           Please use a computer
+  //         </h1>
+  //         <p className="lead text-muted">
+  //           This application works best on a desktop or laptop. Switch to a
+  //           larger screen for the best experience!
+  //         </p>
+  //         <a href="/" className="btn btn-primary mt-4">
+  //           Refresh
+  //         </a>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>

@@ -7,7 +7,7 @@ import { useContext } from "react";
 import { MainContext } from "../../../../Contexts/MainContext";
 
 const UserProfileModal = ({ open, handleClose, user }) => {
-  const { mainColor } = useContext(MainContext);
+  const { mainColor, isMobile } = useContext(MainContext);
   return (
     <Modal
       aria-labelledby="modal-title"
@@ -22,7 +22,8 @@ const UserProfileModal = ({ open, handleClose, user }) => {
           padding: "20px",
           borderRadius: "8px",
           textAlign: "center",
-          maxWidth: "400px",
+          minWidth: "300px",
+          maxWidth: isMobile ? "85vw" : "500px",
           margin: "auto",
           position: "fixed",
           top: "50%",

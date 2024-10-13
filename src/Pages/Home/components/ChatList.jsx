@@ -1,7 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Add } from "@mui/icons-material";
 import {
-  Grid,
   Typography,
   List,
   ListItem,
@@ -25,6 +24,7 @@ import { stringToColor } from "../../../utils/helpers/getColorFromString";
 import SearchIcon from "@mui/icons-material/Search";
 import useListenTyping from "../../../hooks/useListenTyping";
 import { SocketContext } from "../../../Contexts/SocketContext";
+import { AnimatePresence, motion } from "framer-motion";
 
 const ChatList = ({ showGroups, isMobile }) => {
   const [openModal, setOpenModal] = useState(false);
@@ -40,11 +40,46 @@ const ChatList = ({ showGroups, isMobile }) => {
     loggedUser,
     mainColor,
     typing,
+    isChatListCollapsed,
+    setIsChatListCollapsed,
   } = useContext(MainContext);
   const { onlineUsers } = useContext(SocketContext);
   const handleOpenModal = () => {
     setOpenModal(true);
   };
+  const chatListRef = useRef(null);
+  const handleClickOutside = useCallback(
+    (e) => {
+      const collapseButton = document.getElementById("collapse"); // Move this inside the callback
+      if (isMobile) {
+        // Open chat list if the collapse button is clicked and it's currently collapsed
+        if (
+          collapseButton &&
+          collapseButton.contains(e.target) &&
+          isChatListCollapsed
+        ) {
+          setIsChatListCollapsed(false);
+        }
+        // Close chat list if clicking outside and it's currently open
+        else if (
+          chatListRef.current &&
+          !chatListRef.current.contains(e.target) &&
+          !collapseButton.contains(e.target) &&
+          !isChatListCollapsed
+        ) {
+          setIsChatListCollapsed(true);
+        }
+      }
+    },
+    [isChatListCollapsed, isMobile, setIsChatListCollapsed]
+  );
+
+  useEffect(() => {
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [handleClickOutside]);
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -88,268 +123,290 @@ const ChatList = ({ showGroups, isMobile }) => {
   );
 
   return (
-    <Grid
-      item
-      xs={isMobile ? 12 : 3}
-      sx={{
-        padding: 2,
-        height: "100%",
-        backgroundColor: "#E8E8E8",
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Paper
-        component="form"
-        sx={{
-          p: "0.5rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          mb: "1rem",
-          width: "100%",
-        }}
-      >
-        <InputBase
-          placeholder="Search"
-          value={searchQuery} // Controlled input
-          onChange={(e) => setSearchQuery(e.target.value)} // Update the searchQuery state
-          sx={{
-            backgroundColor: "#ffffff",
-            borderRadius: 2,
-            width: "100%",
-          }}
-        />
-        <SearchIcon sx={{ color: "#d6d6d6" }} />
-      </Paper>
-
-      {loading ? (
+    <AnimatePresence>
+      {isChatListCollapsed ? null : (
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          height="80%" // Adjust if you want it to take the full height of the parent
+          ref={chatListRef}
+          component={motion.div}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1, transformOrigin: "left" }}
+          exit={{ scaleX: 0, transformOrigin: "left" }}
+          item
+          xs={isMobile ? 12 : 3}
+          sx={{
+            padding: 2,
+            height: "100%",
+            width: isMobile ? "80%" : "auto",
+            backgroundColor: "#E8E8E8",
+            display: "flex",
+            flexDirection: "column",
+            position: isMobile ? "absolute" : "relative",
+            zIndex: 10,
+            boxShadow: isMobile && "100px 0px 0px rgba(0, 0, 0, 0.5)",
+          }}
         >
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <Typography variant="h6" gutterBottom>
-            {showGroups ? "Groups" : "Chats"}
-          </Typography>
-          <List
+          <Paper
+            component="form"
             sx={{
-              overflow: "auto",
-              flex: 1,
-              flexGrow: 1,
-              "&::-webkit-scrollbar": {
-                width: "5px", // Width of the scrollbar
-              },
-              "&::-webkit-scrollbar-track": {
-                backgroundColor: "transparent", // Background of the scrollbar track
-              },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: mainColor, // Scrollbar thumb color
-                borderRadius: "10px", // Rounded corners for the thumb
-              },
+              p: "0.5rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: "1rem",
+              width: "100%",
             }}
           >
-            {Array.isArray(filteredChats) && filteredChats.length > 0 ? (
-              filteredChats.map((chat) => {
-                const user = showGroups
-                  ? chat.groupName
-                  : chat.participants?.find(
-                      (participant) => participant._id !== loggedUser._id
-                    );
-                return (
-                  <ListItem
-                    onClick={() => {
-                      setCurrentChat(chat);
-                    }}
-                    sx={{
-                      cursor: "pointer",
-                      padding: "0 0.5rem",
-                      ":hover": { backgroundColor: "#d6d6d6" },
-                      bgcolor: `${currentChat._id == chat._id && "#d6d6d6"}`,
-                    }}
-                    key={chat._id}
-                    disablePadding
-                  >
-                    <ListItemAvatar>
-                      <Badge
-                        overlap="circular"
-                        anchorOrigin={{
-                          vertical: "bottom",
-                          horizontal: "right",
+            <InputBase
+              placeholder="Search"
+              value={searchQuery} // Controlled input
+              onChange={(e) => setSearchQuery(e.target.value)} // Update the searchQuery state
+              sx={{
+                backgroundColor: "#ffffff",
+                borderRadius: 2,
+                width: "100%",
+              }}
+            />
+            <SearchIcon sx={{ color: "#d6d6d6" }} />
+          </Paper>
+
+          {loading ? (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              height="80%" // Adjust if you want it to take the full height of the parent
+            >
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              <Typography variant="h6" gutterBottom>
+                {showGroups ? "Groups" : "Chats"}
+              </Typography>
+              <List
+                sx={{
+                  overflow: "auto",
+                  flex: 1,
+                  flexGrow: 1,
+                  "&::-webkit-scrollbar": {
+                    width: "5px", // Width of the scrollbar
+                  },
+                  "&::-webkit-scrollbar-track": {
+                    backgroundColor: "transparent", // Background of the scrollbar track
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: mainColor, // Scrollbar thumb color
+                    borderRadius: "10px", // Rounded corners for the thumb
+                  },
+                }}
+              >
+                {Array.isArray(filteredChats) && filteredChats.length > 0 ? (
+                  filteredChats.map((chat) => {
+                    const user = showGroups
+                      ? chat.groupName
+                      : chat.participants?.find(
+                          (participant) => participant._id !== loggedUser._id
+                        );
+                    return (
+                      <ListItem
+                        onClick={() => {
+                          setCurrentChat(chat);
+                          isMobile && setIsChatListCollapsed(true);
                         }}
-                        variant={
-                          onlineUsers?.includes(!showGroups && user._id) ? "dot" : "standard"
-                        }
                         sx={{
-                          "& .MuiBadge-dot": {
-                            backgroundColor: mainColor, // Set the color for online indicator
-                            width: 12,
-                            height: 12,
-                            borderRadius: "50%",
-                            border: "2px solid white", // Border to match the avatar's edge
-                          },
+                          cursor: "pointer",
+                          padding: "0 0.5rem",
+                          ":hover": { backgroundColor: "#d6d6d6" },
+                          bgcolor: `${
+                            currentChat._id == chat._id && "#d6d6d6"
+                          }`,
                         }}
+                        key={chat._id}
+                        disablePadding
                       >
-                        <Avatar
-                          sx={{
-                            bgcolor: `${stringToColor(
-                              showGroups ? user : user.name
-                            )}`,
-                          }}
-                        >
-                          {getNameInitials(showGroups ? user : user.name)}
-                        </Avatar>
-                      </Badge>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <Typography
-                            variant="body1"
+                        <ListItemAvatar>
+                          <Badge
+                            overlap="circular"
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "right",
+                            }}
+                            variant={
+                              onlineUsers?.includes(!showGroups && user._id)
+                                ? "dot"
+                                : "standard"
+                            }
                             sx={{
-                              marginRight: "8px",
-                              fontSize: 18,
-                              textTransform: "capitalize",
+                              "& .MuiBadge-dot": {
+                                backgroundColor: mainColor, // Set the color for online indicator
+                                width: 12,
+                                height: 12,
+                                borderRadius: "50%",
+                                border: "2px solid white", // Border to match the avatar's edge
+                              },
                             }}
                           >
-                            {showGroups ? user : user.name}
-                          </Typography>
-                          {/* Unread message indicator */}
-                          {chat.lastMessage?.readBy &&
-                            !chat.lastMessage.readBy?.includes(
-                              loggedUser._id
-                            ) && (
-                              <Box
-                                sx={{
-                                  width: "10px",
-                                  height: "10px",
-                                  backgroundColor: mainColor, // Red color for unread message
-                                  borderRadius: "50%",
-                                  marginLeft: "4px",
-                                }}
-                              ></Box>
-                            )}
-                        </Box>
-                      }
-                      secondary={
-                        <Typography
-                          sx={{
-                            overflow: "hidden",
-                            whiteSpace: "nowrap",
-                            textOverflow: "ellipsis",
-                            maxWidth: "100px", // Adjust the max width as needed
-                            fontSize: 14,
-                          }}
-                          color="textSecondary"
-                        >
-                          {typing?.find((item) => item.chatId == chat._id) ? (
-                            <Typography
+                            <Avatar
                               sx={{
-                                color: mainColor,
-                                fontStyle: "italic", // Italicize the "Typing..." text
-                                display: "inline-flex", // Allow for animated dots
-                                alignItems: "center",
-                                fontSize: 14,
+                                bgcolor: `${stringToColor(
+                                  showGroups ? user : user.name
+                                )}`,
                               }}
                             >
-                              Typing
-                              <Box
+                              {getNameInitials(showGroups ? user : user.name)}
+                            </Avatar>
+                          </Badge>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Typography
+                                variant="body1"
                                 sx={{
-                                  width: "4px",
-                                  height: "4px",
-                                  borderRadius: "50%",
-                                  backgroundColor: mainColor,
-                                  animation: "dot-flash 1s infinite",
-                                  marginLeft: "4px",
-                                  "&:nth-of-type(2)": {
-                                    animationDelay: "0.2s",
-                                  },
-                                  "&:nth-of-type(3)": {
-                                    animationDelay: "0.4s",
-                                  },
+                                  marginRight: "8px",
+                                  fontSize: 18,
+                                  textTransform: "capitalize",
                                 }}
-                              />
-                              <Box
-                                sx={{
-                                  width: "4px",
-                                  height: "4px",
-                                  borderRadius: "50%",
-                                  backgroundColor: mainColor,
-                                  animation: "dot-flash 1s infinite",
-                                  marginLeft: "4px",
-                                }}
-                              />
-                              <Box
-                                sx={{
-                                  width: "4px",
-                                  height: "4px",
-                                  borderRadius: "50%",
-                                  backgroundColor: mainColor,
-                                  animation: "dot-flash 1s infinite",
-                                  marginLeft: "4px",
-                                }}
-                              />
+                              >
+                                {showGroups ? user : user.name}
+                              </Typography>
+                              {/* Unread message indicator */}
+                              {chat.lastMessage?.readBy &&
+                                !chat.lastMessage.readBy?.includes(
+                                  loggedUser._id
+                                ) && (
+                                  <Box
+                                    sx={{
+                                      width: "10px",
+                                      height: "10px",
+                                      backgroundColor: mainColor, // Red color for unread message
+                                      borderRadius: "50%",
+                                      marginLeft: "4px",
+                                    }}
+                                  ></Box>
+                                )}
+                            </Box>
+                          }
+                          secondary={
+                            <Typography
+                              sx={{
+                                overflow: "hidden",
+                                whiteSpace: "nowrap",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100px", // Adjust the max width as needed
+                                fontSize: 14,
+                              }}
+                              color="textSecondary"
+                            >
+                              {typing?.find(
+                                (item) => item.chatId == chat._id
+                              ) ? (
+                                <Typography
+                                  sx={{
+                                    color: mainColor,
+                                    fontStyle: "italic", // Italicize the "Typing..." text
+                                    display: "inline-flex", // Allow for animated dots
+                                    alignItems: "center",
+                                    fontSize: 14,
+                                  }}
+                                >
+                                  Typing
+                                  <Box
+                                    sx={{
+                                      width: "4px",
+                                      height: "4px",
+                                      borderRadius: "50%",
+                                      backgroundColor: mainColor,
+                                      animation: "dot-flash 1s infinite",
+                                      marginLeft: "4px",
+                                      "&:nth-of-type(2)": {
+                                        animationDelay: "0.2s",
+                                      },
+                                      "&:nth-of-type(3)": {
+                                        animationDelay: "0.4s",
+                                      },
+                                    }}
+                                  />
+                                  <Box
+                                    sx={{
+                                      width: "4px",
+                                      height: "4px",
+                                      borderRadius: "50%",
+                                      backgroundColor: mainColor,
+                                      animation: "dot-flash 1s infinite",
+                                      marginLeft: "4px",
+                                    }}
+                                  />
+                                  <Box
+                                    sx={{
+                                      width: "4px",
+                                      height: "4px",
+                                      borderRadius: "50%",
+                                      backgroundColor: mainColor,
+                                      animation: "dot-flash 1s infinite",
+                                      marginLeft: "4px",
+                                    }}
+                                  />
+                                </Typography>
+                              ) : (
+                                chat.lastMessage?.text ?? "No messages yet"
+                              )}
                             </Typography>
-                          ) : (
-                            chat.lastMessage?.text ?? "No messages yet"
-                          )}
+                          }
+                        />
+                        <Typography variant="body2" color="textSecondary">
+                          {chat.lastMessage
+                            ? dayjs(chat.lastMessage?.createdAt).format(
+                                "hh:mm A"
+                              )
+                            : ""}
                         </Typography>
-                      }
-                    />
-                    <Typography variant="body2" color="textSecondary">
-                      {chat.lastMessage
-                        ? dayjs(chat.lastMessage?.createdAt).format("hh:mm A")
-                        : ""}
-                    </Typography>
-                  </ListItem>
-                );
-              })
-            ) : (
-              <p>No chats found</p>
-            )}
-          </List>
-        </>
+                      </ListItem>
+                    );
+                  })
+                ) : (
+                  <p>No chats found</p>
+                )}
+              </List>
+            </>
+          )}
+
+          <Button
+            variant="contained"
+            sx={{
+              width: "50px", // Ensure width and height are equal
+              height: "50px",
+              minWidth: "50px",
+              minHeight: "50px",
+              borderRadius: "50%", // Ensures it's round
+              backgroundColor: mainColor,
+              display: "flex", // Center the icon inside
+              justifyContent: "center", // Horizontally center the icon
+              alignItems: "center", // Vertically center the icon
+              boxShadow: "0px 1px 10px rgba(0, 0, 0, 0.2)", // Floating shadow effect
+              ":hover": {
+                color: "black",
+                backgroundColor: "#E8E8E8",
+                boxShadow: "0px 1px 10px rgba(0, 0, 0, 0.3)", // Slightly stronger shadow on hover
+              },
+              position: "absolute",
+              bottom: "1rem",
+              right: "1rem",
+            }}
+            onClick={handleOpenModal}
+          >
+            <Add />
+          </Button>
+
+          <ChatListModal
+            open={openModal}
+            handleClose={handleCloseModal}
+            showGroups={showGroups}
+            isMobile={isMobile}
+          />
+        </Box>
       )}
-
-      <Button
-        variant="contained"
-        sx={{
-          width: "50px", // Ensure width and height are equal
-          height: "50px",
-          minWidth: "50px",
-          minHeight: "50px",
-          borderRadius: "50%", // Ensures it's round
-          backgroundColor: mainColor,
-          display: "flex", // Center the icon inside
-          justifyContent: "center", // Horizontally center the icon
-          alignItems: "center", // Vertically center the icon
-          boxShadow: "0px 1px 10px rgba(0, 0, 0, 0.2)", // Floating shadow effect
-          ":hover": {
-            color: "black",
-            backgroundColor: "#E8E8E8",
-            boxShadow: "0px 1px 10px rgba(0, 0, 0, 0.3)", // Slightly stronger shadow on hover
-          },
-          position: "absolute",
-          bottom: "1rem",
-          right: "1rem",
-        }}
-        onClick={handleOpenModal}
-      >
-        <Add />
-      </Button>
-
-      <ChatListModal
-        open={openModal}
-        handleClose={handleCloseModal}
-        showGroups={showGroups}
-      />
-    </Grid>
+    </AnimatePresence>
   );
 };
 
