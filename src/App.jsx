@@ -8,6 +8,7 @@ import Home from "./Pages/Home";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoutes from "./Components/ProtectedRoutes";
 import AuthRoutes from "./Components/AuthRoutes";
+import useListenChats from "./hooks/useListenChats";
 
 function App() {
   // const [isMobile, setIsMobile] = useState(false);
@@ -29,7 +30,7 @@ function App() {
   ) {
     Notification.requestPermission();
   }
-
+  useListenChats();
   // if (isMobile) {
   //   return (
   //     <div className="d-flex justify-content-center align-items-center vh-100 bg-white">

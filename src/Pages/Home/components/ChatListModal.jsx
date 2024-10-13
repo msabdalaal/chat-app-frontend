@@ -81,6 +81,9 @@ const ChatListModal = ({ open, handleClose, showGroups, isMobile }) => {
           );
         }
       })
+      .catch((error) => {
+        alert(error);
+      })
       .finally(() => {
         setLoading(false);
       });
