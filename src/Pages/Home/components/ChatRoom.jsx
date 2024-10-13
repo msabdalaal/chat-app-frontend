@@ -9,7 +9,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
-import { MoreVert } from "@mui/icons-material";
+import { Logout, MoreVert } from "@mui/icons-material";
 import MessageInput from "./MessageInput";
 import PropTypes from "prop-types";
 import { useContext, useEffect, useState } from "react";
@@ -42,6 +42,7 @@ const ChatRoom = ({ showGroups }) => {
     setSending,
     mainColor,
     typing,
+    setCurrentChat,
   } = useContext(MainContext);
 
   const lastMessageRef = useRef(null);
@@ -249,9 +250,13 @@ const ChatRoom = ({ showGroups }) => {
             </Typography>
           </Box>
           <Box>
+            <IconButton onClick={() => setCurrentChat("")}>
+              <Logout />
+            </IconButton>
             <IconButton onClick={handleChatMenuClick}>
               <MoreVert />
             </IconButton>
+
             <ChatMenu
               anchorEl={chatMenuAnchorEl}
               handleClick={handleChatMenuClick}
